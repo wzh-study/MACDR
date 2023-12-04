@@ -3,7 +3,7 @@ import tqdm
 from time import time
 from data_process.Load_data import Datasets
 from itertools import zip_longest
-from models.IntentCDR10 import *
+from models.MACDR import *
 from utils.log import Logger
 from utils.set import *
 
@@ -29,14 +29,14 @@ class Run(Datasets):
         self.l2_reg = config['l2_reg']
         self.source_domain_reg  = config['source_domain_reg']
 
-        record_path = './saved/' + str(int(self.ratio[0] * 10)) + '_' + str(int(self.ratio[1] * 10)) + '/tgt_' + self.tgt + '_src_' + self.src + '_results/IntentCDR10/'+'runid_'+str(self.runid)+'/'
+        record_path = './saved/' + str(int(self.ratio[0] * 10)) + '_' + str(int(self.ratio[1] * 10)) + '/tgt_' + self.tgt + '_src_' + self.src + '_results/MACDR/'+'runid_'+str(self.runid)+'/'
         self.model_save_path = record_path + 'models/'
         self.model_save_pre_train_path = record_path + 'pretrain_models/'
 
         self.best_epoch = 0
         self.early_stop = 0
         self.results = {'tgt_mae': 10, 'tgt_rmse': 10,
-                        'IntentCDR10_mae': 10, 'IntentCDR10_rmse': 10}
+                        'MACDR_mae': 10, 'MACDR_rmse': 10}
         
         ensureDir(record_path)
         ensureDir(self.model_save_path)
@@ -72,7 +72,7 @@ class Run(Datasets):
         else:
             raise ValueError('Unknown base model: ' + self.base_model)
         
-        model = IntentCDR10(self.config, user_interactions)  #  (181187, 114495, 2, 10, 50)
+        model = MACDR(self.config, user_interactions)  #  (181187, 114495, 2, 10, 50)
         if self.use_cuda:
             pre_train_model = pre_train_model.cuda()
             model = model.cuda()
@@ -113,7 +113,7 @@ class Run(Datasets):
                 src_emb, tgt_emb = model(X, stage)
                 loss = criterion(src_emb, tgt_emb)
 
-            else:  #  IntentCDR10
+            else:  #  MACDR
                 pred = model(X, stage)
                 #pred, pred_pos, pred_neg = model(X, stage)
                 loss = criterion(pred, y.squeeze().float())   #  与真实评分求分数差
@@ -122,7 +122,7 @@ class Run(Datasets):
             loss.backward()
             optimizer.step()
 
-    def train_IntentCDR10(self, data_loader1, data_loader2, model, criterion, optimizer_g, GAN_loss, optimizer_d, epoch, stage, mapping=False):
+    def train_MACDR(self, data_loader1, data_loader2, model, criterion, optimizer_g, GAN_loss, optimizer_d, epoch, stage, mapping=False):
         print('Training Epoch {}:'.format(epoch))
         all_d_loss, all_g_loss, all_main_loss, all_source_loss, all_loss, batch_num = 0, 0, 0, 0, 0, 0
         model.train()
@@ -325,12 +325,12 @@ class Run(Datasets):
                 print(name, param.shape)
 
         t2 = time()
-        print('==========IntentCDR10==========')
+        print('==========MACDR==========')
         for i in range(self.epoch):
-            self.train_IntentCDR10(data_src, data_meta, model, criterion, optimizer_meta, GAN_loss, optimizer_d, i, stage='train_meta')
+            self.train_MACDR(data_src, data_meta, model, criterion, optimizer_meta, GAN_loss, optimizer_d, i, stage='train_meta')
             mae, rmse = self.eval_mae(model, data_test, stage='test_meta')
 
-            self.update_results(model, i, mae, rmse, 'IntentCDR10', self.model_save_path)
+            self.update_results(model, i, mae, rmse, 'MACDR', self.model_save_path)
             self.log.write(set_color('Eval: Epoch:{:d}, Test_tgt_MAE:{:.5f}, Test_tgt_RMSE:{:.5f}\n\n'
               .format(i, mae, rmse), 'blue'))
             if i >= 10  and self.early_stop >= 10:
@@ -353,5 +353,5 @@ class Run(Datasets):
         self.CDR(pre_train_model, model, data_src, data_tgt, data_meta, data_test,
                  criterion, optimizer_src, optimizer_tgt)  #  跨域推荐
         
-        self.log.write(set_color('IntentCDR10: Best_Epoch:{:d}, Best_Tgt_MAE:{:.5f}, Best_Tgt_RMSE:{:.5f}\n'
-              .format(self.best_epoch, self.results['IntentCDR10_mae'], self.results['IntentCDR10_rmse']), 'blue'))
+        self.log.write(set_color('MACDR: Best_Epoch:{:d}, Best_Tgt_MAE:{:.5f}, Best_Tgt_RMSE:{:.5f}\n'
+              .format(self.best_epoch, self.results['MACDR_mae'], self.results['MACDR_rmse']), 'blue'))

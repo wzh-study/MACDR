@@ -6,7 +6,7 @@ import torch.nn as nn
 from models.Base_Module import *
 
 
-class IntentCDR10(torch.nn.Module):
+class MACDR(torch.nn.Module):
     def __init__(self, data_config, user_interactions):
         super().__init__()
         self.num_fields = data_config['num_fields']  #  2

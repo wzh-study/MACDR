@@ -8,7 +8,7 @@ from utils.set import *
 
 from run_main.run_EMCDR import Run as run_EMCDR
 from run_main.run_PTUPCDR import Run as run_PTUPCDR
-from run_main.run_IntentCDR10 import Run as run_IntentCDR10  #  先回归原始吧
+from run_main.run_MACDR import Run as MACDR
 
 
 def prepare(config_path):
@@ -16,11 +16,11 @@ def prepare(config_path):
     #  PreProcess Data
     parser.add_argument('--process_data_mid', default=0)
     parser.add_argument('--process_data_ready', default=0)
-    parser.add_argument('--task', default='2')
-    parser.add_argument('--runid', default='111')  #  runid=1是记录所有expert   run_id=11是记录所有num_cluster   run_id=3记录所有neg_sample   run_id=111记录负样本个数
+    parser.add_argument('--task', default='1')
+    parser.add_argument('--runid', default='0')  
     #  Pre-train Model and Cross Model
-    parser.add_argument('--base_model', default='MF')  #  MF GMF LightGCN  
-    parser.add_argument('--cross_model', default='EMCDR')  #    ItemPop TgtOnly CMF  EMCDR  SSCDR  LACDR  PTUPCDR  HCCDR  IntentCDR  IntentCDR2  IntentCDR3
+    parser.add_argument('--base_model', default='MF')  
+    parser.add_argument('--cross_model', default='EMCDR')  
     #  Generator Parameter
     parser.add_argument('--num_fields', type=int, default=2)
     parser.add_argument('--latent_dim', type=int, default=32)
@@ -28,28 +28,26 @@ def prepare(config_path):
     parser.add_argument('--ratio', default=[0.2, 0.8])
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--gpu', default='0')
-    parser.add_argument('--pre_train_epoch', type=int, default=30)  #  task1:100  task2:30  task3:30 
+    parser.add_argument('--pre_train_epoch', type=int, default=30)  
     parser.add_argument('--epoch', type=int, default=100)
-    parser.add_argument('--lr', type=float, default=0.01)  #  SSCDR 0.5
+    parser.add_argument('--lr', type=float, default=0.01) 
     parser.add_argument('--lr_meta', type=float, default=0.0005)
     parser.add_argument('--weight_decay', type=float, default=0)
 
     #  IntentCDR 
-    parser.add_argument('--margin', type=int, default=0.2)  #  margin loss  M
-    parser.add_argument('--source_domain_reg', type=float, default=0.01)  #  目前200开始比较靠谱的   Best_Tgt_MAE:1.18857, Best_Tgt_RMSE:1.56071   neg=1  labda=0.1        Best_Tgt_MAE:0.95224, Best_Tgt_RMSE:1.23816（neg=5, temp=0.05)
-    parser.add_argument('--lamda', type=float, default=200)  #  辅助loss比例    Eval: Epoch:23, Test_tgt_MAE:1.19279, Test_tgt_RMSE:1.56428（neg=1, labda=10， 0.5）     2%   0.60%  0.28%
-    parser.add_argument('--l2_reg', type=int, default=1e-7)
-    parser.add_argument('--neg_sample', type=int, default=10)  #  采负样本的比例
-    parser.add_argument('--dropout', type=float, default=0.8)  #  task1: 0.6([0.2, 0.8])   0.8([0.2, 0.8])  0.4 Best_Tgt_MAE:0.96045, Best_Tgt_RMSE:1.31171       task3:[0.2,0.8]    dropout=0.4   lamda=300  expert=4   neg=1  Best_Tgt_MAE:0.89967, Best_Tgt_RMSE:1.20109
-  
+    parser.add_argument('--margin', type=int, default=0.2)  
+    parser.add_argument('--source_domain_reg', type=float, default=0.01)  
+    parser.add_argument('--lamda', type=float, default=200)  
+    parser.add_argument('--neg_sample', type=int, default=10)  
+    parser.add_argument('--dropout', type=float, default=0.8) 
 
-    parser.add_argument('--num_cluster', type=int, default=20)  #  10 20 30为task1  task2 200最佳  50 100  
+    parser.add_argument('--num_cluster', type=int, default=20)  
     parser.add_argument('--closest_center', type=int, default=1)   
     parser.add_argument('--gcn_layer', type=int, default=2)
     parser.add_argument('--temperature', type=float, default=0.05)
     parser.add_argument('--n_task', type=int, default=2)
-    parser.add_argument('--n_expert', type=int, default=2)  #  task1:4   task2: 2或16    task3: 4
-    parser.add_argument('--n_mlplayer', type=int, default=4)  #  cluster  neg_sample  expert   
+    parser.add_argument('--n_expert', type=int, default=2) 
+    parser.add_argument('--n_mlplayer', type=int, default=4)   
 
     args = parser.parse_args()
     
@@ -100,6 +98,6 @@ if __name__ == '__main__':
             run_EMCDR(config).main()
         elif args.cross_model == "PTUPCDR":
             run_PTUPCDR(config).main()
-        elif args.cross_model == "IntentCDR10":
-            run_IntentCDR10(config).main()
+        elif args.cross_model == "MACDR":
+            run_MACDR(config).main()
         
